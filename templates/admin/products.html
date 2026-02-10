@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products | Admin</title>
+</head>
+<body>
+
+<h1>Products List</h1>
+
+{% if products %}
+    <ul>
+        {% for product in products %}
+            <li>
+                <strong>{{ product.name }}</strong><br>
+                Price: {{ product.price }}<br>
+                Stock: {{ product.stock }}<br>
+                {{ product.description }}
+            </li>
+            <br>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No products added yet.</p>
+{% endif %}
+
+<a href="/admin">Back to Dashboard</a>
+
+</body>
+</html>
