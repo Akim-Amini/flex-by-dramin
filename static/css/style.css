@@ -13,3 +13,40 @@ p {
     color: #555;
     font-size: 18px;
 }
+
+.admin-menu {
+    margin-top: 30px;
+}
+
+.admin-menu a {
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+    color: #0066cc;
+}
+
+.admin-menu a:hover {
+    color: #003366;
+}
+
+form {
+    width: 300px;
+    margin: auto;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 8px;
+}
+
+button {
+    padding: 10px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #004999;
+}
