@@ -36,6 +36,10 @@ def add_product():
 def view_products():
     return render_template("admin/products.html", products=products)
 
+@app.route("/shop")
+def shop():
+    return render_template("shop.html", products=products)
+
 
 if __name__ =="__main__":
     app.run(debug=True)

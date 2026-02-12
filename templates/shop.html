@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shop | Flex by Dramin</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <h1>Flex by Dramin Shop</h1>
+    <p>Available Products</p>
+
+    {% if products %}
+        <div class="product-list">
+            {% for product in products %}
+                <div class="product-card">
+                    <h3>{{ product.name }}</h3>
+                    <p><strong>Price:</strong> {{ product.price }}</p>
+                    <p><strong>Stock:</strong> {{ product.stock }}</p>
+                    <p>{{ product.description }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No products available at the moment.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">Back to Home</a>
+
+</body>
+</html>
