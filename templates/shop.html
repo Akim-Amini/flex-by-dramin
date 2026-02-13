@@ -20,7 +20,7 @@
                     <p><strong>Stock:</strong> {{ product.stock }}</p>
                     <p>{{ product.description }}</p>
 
-                    <a href="/order/{{ loop.index0 }}">Order Now</a>
+                    <a href="/order/{{ product.id }}">Order Now</a>
                 </div>
             {% endfor %}
         </div>

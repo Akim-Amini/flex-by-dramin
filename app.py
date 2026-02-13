@@ -1,5 +1,23 @@
 from flask import Flask, render_template, request, redirect, url_for
+import sqlite3
 app = Flask(__name__)
+
+def init_db():
+    conn = sqlite3.connect("flex.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL,
+            stock INTEGER NOT NULL,
+            description TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
 
 products = []
 
@@ -21,14 +39,16 @@ def add_product():
         stock = request.form["stock"]
         description = request.form["description"]
 
-        product = {
-            "name": name,
-            "price": price,
-            "stock": stock,
-            "description": description
-        }
+        conn = sqlite3.connect("flex.db")
+        cursor = conn.cursor()
 
-        products.append(product)
+        cursor.execute("""
+            INSERT INTO products (name, price, stock, description)
+            VALUES (?, ?, ?, ?)
+        """, (name, price, stock, description))
+
+        conn.commit()
+        conn.close()
 
         return redirect(url_for("view_products"))
 
@@ -36,32 +56,60 @@ def add_product():
 
 @app.route("/admin/products")
 def view_products():
+    conn = sqlite3.connect("flex.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    conn.close()
+
     return render_template("admin/products.html", products=products)
+
 
 @app.route("/shop")
 def shop():
+    conn = sqlite3.connect("flex.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    conn.close()
+
     return render_template("shop.html", products=products)
 
-@app.route("/order/<int:product_index>")
-def order_product(product_index):
-    if product_index < len(products):
-        product = products[product_index]
 
-        if int(product["stock"]) > 0:
-            product["stock"] = str(int(product["stock"]) - 1)
+@app.route("/order/<int:product_id>")
+def order_product(product_id):
+    conn = sqlite3.connect("flex.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-            order = {
-                "product_name": product["name"],
-                "price": product["price"]
-            }
+    cursor.execute("SELECT * FROM products WHERE id = ?", (product_id,))
+    product = cursor.fetchone()
 
-            orders.append(order)
+    if product and product["stock"] > 0:
+        new_stock = product["stock"] - 1
 
-            return render_template("order_success.html", order=order)
+        cursor.execute("UPDATE products SET stock = ? WHERE id = ?", (new_stock, product_id))
+        conn.commit()
+        conn.close()
 
+        order = {
+            "product_name": product["name"],
+            "price": product["price"]
+        }
+
+        return render_template("order_success.html", order=order)
+
+    conn.close()
     return "Product not available"
 
 
 
 if __name__ =="__main__":
+    init_db()
     app.run(debug=True)
