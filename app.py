@@ -7,12 +7,13 @@ def init_db():
     cursor = conn.cursor()
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS products (
+        CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            price REAL NOT NULL,
-            stock INTEGER NOT NULL,
-            description TEXT
+            product_id INTEGER,
+            product_name TEXT,
+            price REAL,
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(product_id) REFERENCES products(id)
         )
     """)
 
@@ -94,7 +95,15 @@ def order_product(product_id):
     if product and product["stock"] > 0:
         new_stock = product["stock"] - 1
 
+        # Update stock
         cursor.execute("UPDATE products SET stock = ? WHERE id = ?", (new_stock, product_id))
+
+        # Insert order into database
+        cursor.execute("""
+            INSERT INTO orders (product_id, product_name, price)
+            VALUES (?, ?, ?)
+        """, (product_id, product["name"], product["price"]))
+
         conn.commit()
         conn.close()
 
@@ -108,6 +117,18 @@ def order_product(product_id):
     conn.close()
     return "Product not available"
 
+@app.route("/admin/orders")
+def view_orders():
+    conn = sqlite3.connect("flex.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM orders ORDER BY order_date DESC")
+    orders = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("admin/orders.html", orders=orders)
 
 
 if __name__ =="__main__":
