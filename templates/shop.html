@@ -20,7 +20,12 @@
                     <p><strong>Stock:</strong> {{ product.stock }}</p>
                     <p>{{ product.description }}</p>
 
-                    <a href="/order/{{ product.id }}">Order Now</a>
+                    <form action="/order/{{ product.id }}" method="POST">
+                        <input type="text" name="customer_name" placeholder="Your Name" required>
+                        <input type="text" name="customer_phone" placeholder="Phone Number" required>
+                        <input type="text" name="customer_location" placeholder="Location" required>
+                        <button type="submit">Order Now</button>
+                    </form>
                 </div>
             {% endfor %}
         </div>

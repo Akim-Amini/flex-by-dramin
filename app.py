@@ -1,17 +1,36 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
+import os
+
 app = Flask(__name__)
 
+DATABASE = os.path.join("database", "flex.db")
+
 def init_db():
-    conn = sqlite3.connect("flex.db")
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
+    # Products table with description
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            description TEXT,
+            price REAL,
+            stock INTEGER
+        )
+    """)
+
+    # Orders table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id INTEGER,
             product_name TEXT,
             price REAL,
+            customer_name TEXT,
+            customer_phone TEXT,
+            customer_location TEXT,
             order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(product_id) REFERENCES products(id)
         )
@@ -40,7 +59,7 @@ def add_product():
         stock = request.form["stock"]
         description = request.form["description"]
 
-        conn = sqlite3.connect("flex.db")
+        conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -57,7 +76,7 @@ def add_product():
 
 @app.route("/admin/products")
 def view_products():
-    conn = sqlite3.connect("flex.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -71,7 +90,7 @@ def view_products():
 
 @app.route("/shop")
 def shop():
-    conn = sqlite3.connect("flex.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -83,9 +102,9 @@ def shop():
     return render_template("shop.html", products=products)
 
 
-@app.route("/order/<int:product_id>")
+@app.route("/order/<int:product_id>",methods=["GET", "POST"])
 def order_product(product_id):
-    conn = sqlite3.connect("flex.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -93,23 +112,34 @@ def order_product(product_id):
     product = cursor.fetchone()
 
     if product and product["stock"] > 0:
+        customer_name = request.form["customer_name"]
+        customer_phone = request.form["customer_phone"]
+        customer_location = request.form["customer_location"]
+
         new_stock = product["stock"] - 1
 
-        # Update stock
         cursor.execute("UPDATE products SET stock = ? WHERE id = ?", (new_stock, product_id))
 
-        # Insert order into database
         cursor.execute("""
-            INSERT INTO orders (product_id, product_name, price)
-            VALUES (?, ?, ?)
-        """, (product_id, product["name"], product["price"]))
+            INSERT INTO orders 
+            (product_id, product_name, price, customer_name, customer_phone, customer_location)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            product_id,
+            product["name"],
+            product["price"],
+            customer_name,
+            customer_phone,
+            customer_location
+        ))
 
         conn.commit()
         conn.close()
 
         order = {
             "product_name": product["name"],
-            "price": product["price"]
+            "price": product["price"],
+            "customer_name": customer_name
         }
 
         return render_template("order_success.html", order=order)
@@ -119,7 +149,7 @@ def order_product(product_id):
 
 @app.route("/admin/orders")
 def view_orders():
-    conn = sqlite3.connect("flex.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
